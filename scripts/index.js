@@ -48,10 +48,13 @@ function addCardwTitleNLink(cardTitle, cardLink) {
     //const deleteCardBtn = cardElement.querySelector('.card__delete-button');
     //deleteCardBtn.addEventListener('click',  deleteCardwTitleNLink(cardTitle, cardLink));
     placesListContainer.append(cardElement);
+
+    return cardElement;
 }
 
 function deleteCardwTitleNLink (cardTitle, cardLink) {
     console.log('Ищу: ' + cardTitle);
+    let errFlag = 0
     
     listOfExistingCards = placesListContainer.querySelectorAll('.card');
 
@@ -60,9 +63,17 @@ function deleteCardwTitleNLink (cardTitle, cardLink) {
         if (cardTitle === listOfExistingCards[ii].querySelector('.card__title').textContent) {
             console.log('Удаляю: ' + cardTitle);
             listOfExistingCards[ii].remove();
+            errFlag += 1;
+            break;
+        }
+        else if ((errFlag === 0) && (ii === (listOfExistingCards.length-1))) {
+            console.log('ОШИБКА! Кнопка нажата, ничего не удалено!');
+        }
+        else if ((errFlag === 1) && (ii === (listOfExistingCards.length-1))) {
+            console.log('ОШИБКА! Карточка успешно удалена! Однако цикл продолжается. errFlag = ' + errFlag);
         }
         else {
-            console.log('Кнопка нажата, ничего не удалено!')
+            console.log('Кнопка нажата. Ищу...');
         }
         
     }
