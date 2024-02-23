@@ -16,7 +16,7 @@ const placesListContainer = contentContainer.querySelector('.places__list');
 //* Отображает карточки.
 
 function initialSetUp() {
-    //Функция начала загрузки карточик
+    //Функция начала загрузки карточек
     console.log('Начинаю первоначальную загрузку карточек...')
     for (let i = 0; i < initialCards.length; i++) {
         const cardsName = initialCards[i].name;
