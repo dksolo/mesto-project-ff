@@ -21,15 +21,15 @@ function initialSetUp() {
     for (let i = 0; i < initialCards.length; i++) {
         const cardsName = initialCards[i].name;
         const cardsLink = initialCards[i].link;
-        const cardElement = createCardwTitleNLink(cardsName, cardsLink);
+        const cardElement = createCardwTitleNLink(cardsName, cardsLink, deleteCard);
         placesListContainer.append(cardElement);
     }
-    console.log('Загрузка карточек завершена!')
+    console.log('Загрузка карточек завершена!');
 
 
 }
 
-function createCardwTitleNLink(cardTitle, cardLink) {
+function createCardwTitleNLink(cardTitle, cardLink, deleteCard) {
     //Фнукция добавления карточки по имени и ссылке
     console.log('Добавляю: '+ cardTitle);
     const cardTemplate = document.querySelector('#card-template').content;
@@ -38,16 +38,14 @@ function createCardwTitleNLink(cardTitle, cardLink) {
     cardElement.querySelector('.card__image').setAttribute('src', cardLink);
     cardElement.querySelector('.card__image').setAttribute('alt', 'Красивая картинка карточки. На картинке - ' + cardTitle);
     cardElement.querySelector('.card__title').textContent = cardTitle;
-    cardElement.querySelector('.card__delete-button').addEventListener('click', function (evt) {
-        console.log('Кнопка удаления нажата на ' + cardTitle);
-        deleteCard(evt);
-    });
+    cardElement.querySelector('.card__delete-button').addEventListener('click', deleteCard);
     return cardElement;
 }
 
 function deleteCard (evt) {
     //функция удаления карточки
-    evt.target.closest('.card').remove()
+    console.log('Удаляю карточку.');
+    evt.target.closest('.card').remove();
 }
 
 //* Исполенение функций
