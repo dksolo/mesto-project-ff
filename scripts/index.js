@@ -33,7 +33,7 @@ function createCardwTitleNLink(cardTitle, cardLink, deleteCard) {
     //Фнукция добавления карточки по имени и ссылке
     console.log('Добавляю: '+ cardTitle);
     const cardTemplate = document.querySelector('#card-template').content;
-    const cardElement = cardTemplate.querySelector('.card').cloneNode(true);     
+    const cardElement = cardTemplate.querySelector('.card').cloneNode(true);
 
     cardElement.querySelector('.card__image').setAttribute('src', cardLink);
     cardElement.querySelector('.card__image').setAttribute('alt', 'Красивая картинка карточки. На картинке - ' + cardTitle);
