@@ -16,7 +16,7 @@ function createCardwTitleNLink(cardTitle, cardLink, deleteCard, clickLikeCard, o
     cardElement.querySelector('.card__title').textContent = cardTitle;
     cardElement.querySelector('.card__delete-button').addEventListener('click', deleteCard);
     cardElement.querySelector('.card__like-button').addEventListener('click', clickLikeCard);
-    cardElement.querySelector('.card__image').addEventListener('click', openImgPopUp);
+    cardImage.addEventListener('click', () => openImgPopUp(cardTitle, cardLink));
     return cardElement;
 }
 
@@ -31,19 +31,4 @@ function clickLikeCard (evt) {
   evt.target.classList.toggle('card__like-button_is-active')
 }
 
-function openImgPopUp (evt) {
-  //console.log('Открываю попап для картинки.');
-  const imagePopUp = document.querySelector('.popup_type_image');
-  const imagePopUpImage = imagePopUp.querySelector('.popup__image')
-  const imgLink = evt.target.getAttribute('src');
-  const imgTitle = evt.target.closest('.places__item').querySelector('.card__title').textContent;
-  imagePopUpImage.setAttribute('src', imgLink);
-  imagePopUpImage.setAttribute('alt', 'Красивая картинка карточки. На картинке - ' + imgTitle);
-  imagePopUp.querySelector('.popup__caption').textContent = imgTitle;
-  //console.log('Открываю попап.');
-  imagePopUp.classList.add('popup_is-opened');
-  window.addEventListener('keydown', closePopUpEsc);
-  //console.log('Происходит открытие картинки.')
-}
-
-export { createCardwTitleNLink, deleteCard, clickLikeCard, openImgPopUp  }
+export { createCardwTitleNLink, deleteCard, clickLikeCard }

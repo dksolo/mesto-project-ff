@@ -1,29 +1,23 @@
 import './pages/index.css';
 import { initialCards }  from './scripts/cards.js';
-import { createCardwTitleNLink, deleteCard, clickLikeCard, openImgPopUp } from './components/card.js';
-import { openPopup, closePopUp } from './components/modal.js';
+import { createCardwTitleNLink, deleteCard, clickLikeCard } from './components/card.js';
+import { openPopup, closePopUp, closePopUpEsc, handleOverlay } from './components/modal.js';
 
 //Этот файл был перенесен из папки scripts
-
-// @todo: Темплейт карточки
-
-// @todo: DOM узлы
-
-// @todo: Функция создания карточки
-
-// @todo: Функция удаления карточки
-
-// @todo: Вывести карточки на страницу
-
 
 const contentContainer = document.querySelector('.content');
 const placesListContainer = contentContainer.querySelector('.places__list');
 //Кнопки
 const profileEditButton = contentContainer.querySelector('.profile__edit-button');
 const newCardButton = contentContainer.querySelector('.profile__add-button');
+const xCloseButtons = document.querySelectorAll('.popup__close')
 //Попапы
 const profileEditPopUp = document.querySelector('.popup_type_edit');
 const newCardPopUp = document.querySelector('.popup_type_new-card');
+
+const imagePopUp = document.querySelector('.popup_type_image');
+const imagePopUpImage = imagePopUp.querySelector('.popup__image')
+const imagePopUpCaption = imagePopUp.querySelector('.popup__caption')
 //Формы
 const profileEditForm = document.forms["edit-profile"];
 const nameOfProfile = profileEditForm.elements['name'];
@@ -49,18 +43,14 @@ function initialSetUp() {
     profileEditButton.addEventListener('click', openEditPopUp);
     newCardButton.addEventListener('click', openNewCardPopUp);
     //Вешаем закрытие попапов на кнопку крестик
-    document.querySelectorAll('.popup__close').forEach((ppupX) => ppupX.addEventListener('click', closePopUp));
+    xCloseButtons.forEach((ppupX) => {
+      const popup2close = ppupX.closest('.popup')
+      ppupX.addEventListener('click', () => closePopUp(popup2close));
+    });
     document.querySelectorAll('.popup').forEach((ppup) => ppup.addEventListener('mousedown', handleOverlay));
     //Вешаем закрытие попапов на форму
     newCardForm.addEventListener('submit', addNewCard);
     profileEditForm.addEventListener('submit', editProfile);
-}
-
-function handleOverlay (evt) {
-  //Функция закрытия при нажатии на "Оверлэй"
-  if ((document.querySelector('.popup_is-opened')) && !(evt.target.closest('.popup__content'))) {
-    closePopUp(evt);
-  };
 }
 
 //Хардкод под модальные окна
@@ -78,7 +68,7 @@ function addNewCard (evt) {
     placesListContainer.prepend(cardElement); //Добавляем карточку в начало
     newPlaceName.value = ''; //Очищаем инпуты
     newPlaceLink.value = '';
-    closePopUp(evt);
+    closePopUp(newCardPopUp);
   }
 
 function openEditPopUp (evt) {
@@ -88,11 +78,21 @@ function openEditPopUp (evt) {
   openPopup(profileEditPopUp)
 }
 
+function openImgPopUp (imgTitle, imgLink) {
+  //console.log('Открываю попап для картинки.');
+  imagePopUpImage.setAttribute('src', imgLink);
+  imagePopUpImage.setAttribute('alt', 'Красивая картинка карточки. На картинке - ' + imgTitle);
+  imagePopUpCaption.textContent = imgTitle;
+  //console.log('Открываю попап.');
+  openPopup(imagePopUp)
+  //console.log('Происходит открытие картинки.')
+}
+
 function editProfile (evt) {
   evt.preventDefault();
   originalNameOfProfile.textContent = nameOfProfile.value;
   originalDescriptionOfProfile.textContent = descriptionOfProfile.value;
-  closePopUp(evt);
+  closePopUp(profileEditPopUp);
 }
 
 initialSetUp()

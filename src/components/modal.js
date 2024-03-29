@@ -2,23 +2,33 @@
 
 function openPopup(popup) {
     //console.log('Открываю попап.');
-    //console.log(popup);
     popup.classList.add('popup_is-opened');
     window.addEventListener('keydown', closePopUpEsc); 
 }
 
-function closePopUp(evt) {
-    const openedPopup = document.querySelector('.popup_is-opened')
+function closePopUp(popup) {
     //console.log('Закрываю попап.');
-    openedPopup.classList.remove('popup_is-opened');
+    popup.classList.remove('popup_is-opened');
     window.removeEventListener('keydown', closePopUpEsc);
 } 
 
 function closePopUpEsc (evt) {
+  const openedPopup = document.querySelector('.popup_is-opened')
   if (evt.key === 'Escape') {
     //console.log('Нажата кнопка Escape');
-    closePopUp(evt);
+    closePopUp(openedPopup);
   }
 }
 
-export { openPopup, closePopUp, closePopUpEsc }
+function handleOverlay (evt) {
+  //Функция закрытия при нажатии на "Оверлэй"
+  //Поскольку в index.js event вешается на весь документ, то 
+  //В этой функции идет проверка на наличие класса popup_is-opened и 
+  //что это не сам контент попапа
+  const eventTarget = evt.target;
+  if ((eventTarget.classList.contains("popup_is-opened")) && !(evt.target.closest('.popup__content'))) {
+    closePopUp(eventTarget);
+  };
+}
+
+export { openPopup, closePopUp, closePopUpEsc, handleOverlay }
