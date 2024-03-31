@@ -13,20 +13,17 @@ function closePopUp(popup) {
 } 
 
 function closePopUpEsc (evt) {
-  const openedPopup = document.querySelector('.popup_is-opened')
   if (evt.key === 'Escape') {
     //console.log('Нажата кнопка Escape');
+    const openedPopup = document.querySelector('.popup_is-opened')
     closePopUp(openedPopup);
   }
 }
 
 function handleOverlay (evt) {
   //Функция закрытия при нажатии на "Оверлэй"
-  //Поскольку в index.js event вешается на весь документ, то 
-  //В этой функции идет проверка на наличие класса popup_is-opened и 
-  //что это не сам контент попапа
   const eventTarget = evt.target;
-  if ((eventTarget.classList.contains("popup_is-opened")) && !(evt.target.closest('.popup__content'))) {
+  if (eventTarget.classList.contains("popup_is-opened")) {
     closePopUp(eventTarget);
   };
 }
