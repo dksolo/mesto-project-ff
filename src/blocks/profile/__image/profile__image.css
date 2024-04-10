@@ -1,4 +1,5 @@
 .profile__image {
+  position: relative;
   width: 120px;
   height: 120px;
   -webkit-border-radius: 50%;
@@ -8,6 +9,36 @@
   background-position: center;
   margin: 0 29px 0 0;
 }
+
+.profile__image-edit-btn {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: cover;
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5) url('../../../images/edit-icon.svg') center no-repeat;
+  border: none;
+  /*background: red;*/
+  background-size: 26px 26px;
+  cursor: pointer;
+  -webkit-transition: 0.3s;
+  -moz-transition: 0.3s;
+  -ms-transition: 0.3s;
+  -o-transition: 0.3s;
+  transition: 0.3s;
+  padding: 0;
+  margin: 0;
+  opacity:0;
+}
+
+.profile__image-edit-btn:hover {
+  opacity:0.6;
+}
+
 
 @media screen and (max-width: 740px) {
   .profile__image {
