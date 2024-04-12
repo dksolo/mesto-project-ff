@@ -1,165 +1,133 @@
-import { createNewCard, deleteCard, clickLikeCard, createCardObject } from './card.js';
-import { openImgPopUp, placesListContainer, renderGetCards } from '../index.js';
-// в этом файле лежат функции API
+// в этом файле лежат функции API для запросов на сервер с проверкой ответа
 
-const originalNameOfProfile = document.querySelector('.profile__title')
-const originalDescriptionOfProfile = document.querySelector('.profile__description')
+const apiConfig = {
+    baseURL: 'https://nomoreparties.co/v1/wff-cohort-10',
+    headers: {
+        authorization: '54884444-3c55-4956-a503-098c8057432d',
+        'Content-Type': 'application/json'
+    }
+}
 
-const originalAvatarOfProfile = document.querySelector('.profile__image')
-
-async function getUserInfo() {
-    return fetch('https://nomoreparties.co/v1/wff-cohort-10/users/me', {
-      headers: {
-        authorization: '54884444-3c55-4956-a503-098c8057432d'
-      }
-    })
-    .then((res) => {
-      if (res.ok) {
+function checkResponse(res) {
+    if (res.ok) {
+        console.log('Response is OK.')
         return res.json();
-      }
-    })
-    .then((result) => {
-      originalNameOfProfile.textContent = result.name;
-      originalDescriptionOfProfile.textContent = result.about;
-      originalAvatarOfProfile.style = `background-image: url(${result.avatar});`;
-      const userInfo = result;
-      return userInfo;
-    })
-    .catch((err) => {   
-      console.log('При загрузке профиля произошла ошибка. \nОшибка: ', err);
-    })
-  }
+    }
+    return Promise.reject(`Ошибка ${res.status}`);
+}
 
+const makeRequest = (url, options) => {
+    //Функция для запросов
+    console.log(`Sending a request to ${url}. Options are: ${JSON.stringify(options)}`);
+    return fetch(url, options).then((res) => {return checkResponse(res)})
+}
 
+const getUserInfo = (apiConfig) => {
+    const userInfoURL = `${apiConfig.baseURL}/users/me`;
+    const getCardsOptions = {'headers': apiConfig.headers}
+
+    return makeRequest(userInfoURL, getCardsOptions)
+}
   
-async function getCards(userInfo, defaultErrCards) {
+//async function getCards(userInfo, defaultErrCards) {
+const getCards = (apiConfig) => {
 //Функция делает запрос на сервер и создает карточки. 
 //В случае успеха карточки создаются с сервера
-//в случае ошибки загружаются из файла cards.js
-fetch('https://nomoreparties.co/v1/wff-cohort-10/cards', {
-    headers: {
-    authorization: '54884444-3c55-4956-a503-098c8057432d'
-    }
-})
-.then(res => {
-    if (res.ok) {
-    return res.json();
-    }
-})
-.then(res => {
-    //console.log(res);
-    renderGetCards(res, userInfo)
-})
-.catch((err) => {
-    console.log('При загрузке карточек произошла ошибка. \nОшибка: ', err);
-    renderGetCards(defaultErrCards, userInfo)
-})
+    const getCardsURL = `${apiConfig.baseURL}/cards`;
+    const getCardsOptions = {'headers': apiConfig.headers}
+
+    return makeRequest(getCardsURL, getCardsOptions)
 }
-/* Moved to index
-function renderGetCards(cardsJSON, userInfo) {
-for (let i = 0; i < cardsJSON.length; i++) {
-    const cardElement = createNewCard(cardsJSON[i], userInfo, deleteCard, clickLikeCard, openImgPopUp);
-    placesListContainer.append(cardElement);}
-}*/
-  
   
 //Профиль пользователя
-function patchEditedProfile(newName, newDescription, btn) {
-//Функция отправляет PATCH-запрос на сервер и 
-//Меняет имя и описание пользователя
-renderLoadingProfile(true, btn)
-//console.log('Starting to edit profile...')
-fetch('https://nomoreparties.co/v1/wff-cohort-10/users/me', {
-    method: 'PATCH',
-    headers: {
-    authorization: '54884444-3c55-4956-a503-098c8057432d',
-    'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-    name: newName,
-    about: newDescription
-    })
-})
-.then(res => {
-    if (res.ok) {
-    return res.json();
+
+const patchEditedProfile = (newName, newDescription, apiConfig) => {
+    //Функция отправляет PATCH-запрос на сервер и 
+    //Меняет имя и описание пользователя
+    //console.log('Starting to edit profile...')
+    const editProfileURL = `${apiConfig.baseURL}/users/me`;
+    const editProfileOptions = {
+        'method': 'PATCH',
+        'headers': apiConfig.headers,
+        'body': JSON.stringify({
+        'name': newName,
+        'about': newDescription
+        })
     }
-})
-.finally( () => renderLoadingProfile(false, btn)); 
+
+    return makeRequest(editProfileURL, editProfileOptions)
 }
   
-function patchProfileAvatar(link, btn) {
+const patchProfileAvatar = (link, apiConfig) => {
 //Функция отправляет PATCH-запрос на сервер и 
 //Меняет аватар пользователя.
-renderLoadingProfile(true, btn)
-fetch('https://nomoreparties.co/v1/wff-cohort-10/users/me/avatar', {
-    method: 'PATCH',
-    headers: {
-    authorization: '54884444-3c55-4956-a503-098c8057432d',
-    'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-    avatar: link
+
+const editProfileAvatarURL = `${apiConfig.baseURL}/users/me/avatar`;
+const editProfileAvatarOptions = {
+    'method': 'PATCH',
+    'headers': apiConfig.headers,
+    'body': JSON.stringify({
+    'avatar': link
     })
-})
-.then(res => {
-    if (res.ok) {
-    return res.json();
-    }
-})
-.finally( () => renderLoadingProfile(false, btn)); 
 }
 
-//Загрузка: 
-function renderLoadingProfile(isLoading, btn) {
-if (isLoading) {
-    btn.textContent = 'Сохранение...';
-} else {
-    btn.textContent = 'Сохранить';
-}
-}
-
-function renderLoadingCard(isLoading, btn) {
-if (isLoading) {
-    btn.textContent = 'Создание...';
-} else {
-    btn.textContent = 'Сохранить';
-}
+return makeRequest(editProfileAvatarURL, editProfileAvatarOptions)
 }
 
 //Создание новой карточки
-function postNewCard (newCardName, newCardLink, btn) {
-renderLoadingCard(true, btn)
-//console.log(`Posting: \nNew Card Name: ${newCardName} \nnewCardLink: ${newCardLink}`)
-fetch('https://nomoreparties.co/v1/wff-cohort-10/cards', {
-method: 'POST',
-headers: {
-    authorization: '54884444-3c55-4956-a503-098c8057432d',
-    'Content-Type': 'application/json'
-},
-body: JSON.stringify({
-    "name": newCardName,
-    "link": newCardLink
-})
-})
-.then(res => {
-if (res.ok) {
-    return res.json();
+const postNewCard = (newCardName, newCardLink, apiConfig) => {
+    const postNewCardURL = `${apiConfig.baseURL}/cards`;
+    const postNewCardOptions = {
+        'method': 'POST',
+        'headers': apiConfig.headers,
+        'body': JSON.stringify({
+            "name": newCardName,
+            "link": newCardLink
+        })
+    }
+    return makeRequest(postNewCardURL, postNewCardOptions)
 }
-})
-.finally( () => renderLoadingCard(false, btn));
+
+//Like карточки 
+const sendLikeCard = (apiConfig, cardID, cardLikeMethod) => {
+    const postNewCardURL = `${apiConfig.baseURL}/cards/likes/${cardID}`;
+    const postNewCardOptions = {
+        'method': `${cardLikeMethod}`,
+        'headers': apiConfig.headers
+    }
+    return makeRequest(postNewCardURL, postNewCardOptions)
+
+
+    /*fetch(`https://nomoreparties.co/v1/wff-cohort-10/cards/likes/${cardID}`, {
+          method: `${cardLikeMethod}`,
+          headers: {
+            authorization: '54884444-3c55-4956-a503-098c8057432d',
+            'Content-Type': 'application/json'
+          }
+        })
+          .then( (res) => {
+            if (res.ok) {
+              return res.json();
+            }
+          })
+          .then(res => {
+            //console.log(`Liked or unliked ${res.name}`);
+            refreshLikes(res, cardLikeCounter, cardLikeBtn, userInfo);
+          })
+          .catch((err) => {
+            console.log('При загрузке карточки произошла ошибка. \nОшибка: ', err);
+          })*/
+
 }
   
 //Удаление карточки
-function deleteMyCard (cardID) {
-//console.log(`Deleting: \nMy card ID: ${cardID}`);
-return fetch(`https://nomoreparties.co/v1/wff-cohort-10/cards/${cardID}`, {
-method: 'DELETE',
-headers: {
-    authorization: '54884444-3c55-4956-a503-098c8057432d',
-    'Content-Type': 'application/json'
-}
-}); 
+const deleteMyCard = (cardID, apiConfig) => {
+    const deleteMyCardURL = `${apiConfig.baseURL}/cards/${cardID}`;
+    const deleteMyCardOptions = {
+        'method': 'DELETE',
+        'headers': apiConfig.headers
+    }
+    return makeRequest(deleteMyCardURL, deleteMyCardOptions)
 }
 
-export { getUserInfo, getCards, patchEditedProfile, patchProfileAvatar, renderLoadingProfile, renderLoadingCard, postNewCard, deleteMyCard }
+export { getUserInfo, getCards, patchEditedProfile, patchProfileAvatar, postNewCard, deleteMyCard, apiConfig, sendLikeCard }

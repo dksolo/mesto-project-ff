@@ -3,7 +3,8 @@ import { defaultErrCards }  from './scripts/cards.js';
 import { createNewCard, deleteCard, clickLikeCard, createCardObject } from './components/card.js';
 import { openPopup, closePopUp, closePopUpEsc, handleOverlay } from './components/modal.js';
 import { enableValidation, validationConfig } from './components/validation.js';
-import { getUserInfo, getCards,  patchEditedProfile, patchProfileAvatar, renderLoadingProfile, renderLoadingCard, postNewCard, deleteMyCard  } from './components/api.js';
+import { getUserInfo, getCards, patchEditedProfile, patchProfileAvatar, postNewCard, apiConfig, sendLikeCard } from './components/api.js';
+import { renderLoadingBtnText } from  './components/utilities.js';
 
 //Этот файл был перенесен из папки scripts
 
@@ -41,14 +42,14 @@ const newCardForm = document.forms["new-place"];
 
 //* Здесь я создаю функцию, которая считывает массив и затем элемент за элементом массива 
 //* Отображает карточки.
+
 async function initialSetUp() {
   //Делаю запрос о профиле пользователя
-  const userInfo = await getUserInfo();
-
-  //Делаю запрос о карточках на сервере
-  const getCardsPromise = await getCards(userInfo, defaultErrCards)
-
-  Promise.all([userInfo, getCardsPromise]).then(() => {  
+  renderUserInfo(apiConfig)
+  .then((userInfo) => {renderGetCards(userInfo, apiConfig);return userInfo})
+  .then((userInfo) => {
+    console.log('User Info')
+    console.log(userInfo)
     profileEditButton.addEventListener('click', openEditPopUp);       
     editAvatarButton.addEventListener('click', openEditAvatarPopup)
     newCardButton.addEventListener('click', openNewCardPopUp);
@@ -62,6 +63,55 @@ async function initialSetUp() {
     newCardForm.addEventListener('submit', (evt) => addNewCard(evt, userInfo));
     profileEditForm.addEventListener('submit', editProfile); 
     editAvatarForm.addEventListener('submit', editAvatar);
+    })
+    .catch((err) => {
+      console.log('При начальной настройке произошла ошибка. \nОшибка: ', err);
+    }) 
+  
+}
+
+
+//Код под прогрузку элементов
+
+//Код под загрузку информации пользователя
+
+async function renderUserInfo(apiConfig) {
+  //Общая функция для загрузки и помещения элементов профиля на страницу
+  //Принимает объект настройки API
+  //Отдает объект с информацией пользователя 
+  const userInfoLoading = {
+    name: 'Загружаем...',
+    about: 'Загружаем...',
+    avatar: 'https://m.media-amazon.com/images/M/MV5BZDYwYzQxZWUtMDRmYS00ZDc0LTlhYWUtMGIzYjFkNDQ1ZmNlXkEyXkFqcGdeQXVyMTc4MzI2NQ@@._V1_.jpg'
+  }
+  console.log(apiConfig)
+  placeUserInfo(userInfoLoading)
+  return getUserInfo(apiConfig).then((userInfo) => {
+    placeUserInfo(userInfo);
+    return userInfo
+    })
+}
+
+function placeUserInfo(userInfo) {
+  //Функция использует userInfo для помещения элементов на страницу
+  originalNameOfProfile.textContent = userInfo.name;
+  originalDescriptionOfProfile.textContent = userInfo.about;
+  originalAvatarOfProfile.style = `background-image: url(${userInfo.avatar});`;
+}
+
+//Код под загрузку карточек
+
+const renderGetCards = (userInfo, apiConfig) => {
+  console.log(userInfo)
+  getCards(apiConfig)
+  .then((cardsArray) => {
+    for (let i = 0; i < cardsArray.length; i++) {
+      const cardElement = createNewCard(cardsArray[i], userInfo, deleteCard, clickLikeCard, openImgPopUp);
+      placesListContainer.append(cardElement);}
+    return cardsArray
+  })
+  .catch((err) => {
+      console.log('При загрузке карточек произошла ошибка. \nОшибка: ', err);
   })
 }
 
@@ -76,18 +126,26 @@ function addNewCard (evt, userInfo) {
     evt.preventDefault();  
     const newPlaceName = newCardForm.elements['place-name'];
     const newPlaceLink = newCardForm.elements['link'];
-    //console.log(newCardForm.elements['place-name'])
-    //Add a function to assemble JS Object
-    const cardObject = createCardObject(newPlaceName.value, newPlaceLink.value, userInfo);
-    // createNewCard(cardObject, userInfo, deleteCard, clickLikeCard, openImgPopUp)
-    const cardElement = createNewCard(cardObject, userInfo, deleteCard, clickLikeCard, openImgPopUp);
-    placesListContainer.prepend(cardElement); //Добавляем карточку в начало
-    const newCardBtn = evt.target.querySelector('.button')
-    postNewCard (newPlaceName.value, newPlaceLink.value, newCardBtn);
-    newPlaceName.value = ''; //Очищаем инпуты
-    newPlaceLink.value = '';
-    clearValidation(newCardForm, validationConfig); //Очищаем ошибки
-    closePopUp(newCardPopUp);
+    const newCardBtn = evt.target.querySelector('.button');
+
+    renderLoadingBtnText(true, newCardBtn, 'Создание...');
+
+    postNewCard(newPlaceName.value, newPlaceLink.value, apiConfig).then((cardObject) => {
+      const cardElement = createNewCard(cardObject, userInfo, deleteCard, clickLikeCard, openImgPopUp);
+      return cardElement;
+    })
+    .then((cardElement)=>{
+      placesListContainer.prepend(cardElement); //Добавляем карточку в начало
+    }).then(() =>{ 
+      newCardForm.reset()
+      clearValidation(newCardForm, validationConfig); //Очищаем ошибки
+    }).then(() => {
+      closePopUp(newCardPopUp);
+      renderLoadingBtnText(false, newCardBtn, 'Создание...');
+    })
+    .catch((err) => {
+      console.log('При отправке карточки произошла ошибка. \nОшибка: ', err);
+    })
   }
 
 function openEditAvatarPopup (evt) {
@@ -115,22 +173,42 @@ function openImgPopUp (imgTitle, imgLink) {
   //console.log('Происходит открытие картинки.')
 }
 
-function editProfile (evt) {
+const editProfile = (evt) => {
   evt.preventDefault();
-  originalNameOfProfile.textContent = nameOfProfile.value;
-  originalDescriptionOfProfile.textContent = descriptionOfProfile.value;
   const profileBtn = evt.target.querySelector('.button')
-  patchEditedProfile(nameOfProfile.value, descriptionOfProfile.value, profileBtn)
-  closePopUp(profileEditPopUp);
+  //renderPatchEditedProfile(nameOfProfile.value, descriptionOfProfile.value, profileBtn)
+
+  //Функция отправляет PATCH-запрос на сервер и 
+  //Меняет имя и описание пользователя
+  renderLoadingBtnText(true, profileBtn, 'Сохранение...')
+  //console.log('Starting to edit profile...')
+  patchEditedProfile(nameOfProfile.value, descriptionOfProfile.value, apiConfig).then(() => {
+    originalNameOfProfile.textContent = nameOfProfile.value;
+    originalDescriptionOfProfile.textContent = descriptionOfProfile.value;}
+  )
+  .then(
+    () => renderLoadingBtnText(false, profileBtn, 'Сохранение...')
+  ).then(
+    closePopUp(profileEditPopUp)
+  )
+  .catch((err) => {
+    console.log('При изменении профиля произошла ошибка. \nОшибка: ', err);
+  })
 }
 
-function editAvatar (evt) {
+const editAvatar = (evt) => {
   evt.preventDefault();
   const newAvatarURL = newAvatar.value
-  originalAvatarOfProfile.style = `background-image: url(${newAvatarURL});`;
   const avatarBtn = evt.target.querySelector('.button')
-  patchProfileAvatar(newAvatarURL, avatarBtn)
-  closePopUp(editAvatarPopup);
+  renderLoadingBtnText(true, avatarBtn, 'Сохранение...')
+
+  patchProfileAvatar(newAvatarURL, apiConfig).then(() => {
+    originalAvatarOfProfile.style = `background-image: url(${newAvatarURL});`;
+  }).then(() =>   {closePopUp(editAvatarPopup); 
+    renderLoadingBtnText(false, avatarBtn, 'Сохранение...')}) 
+    .catch((err) => {
+      console.log('При изменении аватара произошла ошибка. \nОшибка: ', err);
+    }) 
 }
 
 //ФУНКЦИИ ВАЛИДАЦИИ
@@ -150,13 +228,4 @@ function  clearValidation (form, validationConfig) {
 
 enableValidation(validationConfig) 
 
-
-function renderGetCards(cardsJSON, userInfo) {
-  for (let i = 0; i < cardsJSON.length; i++) {
-      const cardElement = createNewCard(cardsJSON[i], userInfo, deleteCard, clickLikeCard, openImgPopUp);
-      placesListContainer.append(cardElement);}
-  }
-
 initialSetUp()
-
-export { openImgPopUp, deleteMyCard, placesListContainer, renderGetCards };
