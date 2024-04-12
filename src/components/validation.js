@@ -4,7 +4,7 @@ const validationConfig = {
   formSelector: '.popup__form',
   inputSelector: '.popup__input',
   submitButtonSelector: '.popup__button',
-  inactiveButtonClass: 'popup__button_disabled',
+  inactiveButtonClass: 'popup__submit_inactive',
   inputErrorClass: 'popup__input_type_error',
   errorClass: 'popup__input_type_error_active'
 }
@@ -21,7 +21,7 @@ function enableValidation (validationConfig) {
       console.log('Event triggered! ')
     });
     const buttonElement = formElement.querySelector('.popup__button');
-    toggleButtonState(inputList, buttonElement);
+    toggleButtonState(inputList, buttonElement, validationConfig);
     
     //formInput.addEventListener('input', function (evt) {
     formInputs.forEach((formInput) => {
@@ -29,7 +29,7 @@ function enableValidation (validationConfig) {
         console.log(evt.target.validity.valid)
         const formError = formElement.querySelector(`.${formInput.id}-error`);
         if (evt.target.validity.patternMismatch) {
-            evt.target.setCustomValidity(evt.target.dataset.latinCyrillError); //For some reason this references the data-* attribute in html
+            evt.target.setCustomValidity(evt.target.dataset.latinCyrillError); 
           } else {
             evt.target.setCustomValidity("");
           }
@@ -37,11 +37,12 @@ function enableValidation (validationConfig) {
         if (!evt.target.validity.valid) {
           // Если поле не проходит валидацию, покажем ошибку
           showInputError(formInput, formError, formInput.validationMessage, validationConfig);
+          toggleButtonState(inputList, buttonElement, validationConfig);
         } else {
           // Если проходит, скроем
           hideInputError(formInput, formError, validationConfig);
         }
-        toggleButtonState(inputList, buttonElement);
+        toggleButtonState(inputList, buttonElement, validationConfig);
       })
     });
   })
@@ -69,20 +70,39 @@ function enableValidation (validationConfig) {
     })
   }; 
 
-  function toggleButtonState(inputList, buttonElement) {
+  function toggleButtonState(inputList, buttonElement, validationConfig) {
     // Если есть хотя бы один невалидный инпут
     if (hasInvalidInput(inputList)) {
       // сделай кнопку неактивной
-          buttonElement.disabled = true;
-      buttonElement.classList.add('popup__submit_inactive');
+      buttonElement.disabled = true;
+      buttonElement.classList.add(validationConfig.inactiveButtonClass);
     } else {
-          // иначе сделай кнопку активной
-          buttonElement.disabled = false;
-      buttonElement.classList.remove('popup__submit_inactive');
+        // иначе сделай кнопку активной
+        buttonElement.disabled = false;
+      buttonElement.classList.remove(validationConfig.inactiveButtonClass);
     }
-
   }
-
 }
 
-export { enableValidation, validationConfig }
+function disableButton(formElement, validationConfig) {
+  //Эта функция должна быть использована при открытии попапа
+  //Она отключает кнопку до проверки валидацией.
+  //const formElement = document.querySelectorAll(validationConfig.formSelector);
+  const buttonElement = formElement.querySelector('.popup__button');
+  buttonElement.disabled = true;
+  buttonElement.classList.add(validationConfig.inactiveButtonClass);
+}
+
+
+function  clearValidation (form, validationConfig) {
+  const formInputs = form.querySelectorAll(validationConfig.inputSelector);
+  formInputs.forEach((formInput) => {
+    const formError = form.querySelector(`.${formInput.id}-error`);
+    formInput.classList.remove(validationConfig.inputErrorClass);
+    formError.classList.remove(validationConfig.errorClass);
+    formError.textContent = '';
+    });
+}
+
+
+export { enableValidation, clearValidation, validationConfig, disableButton }

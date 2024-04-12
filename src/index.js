@@ -1,8 +1,7 @@
 import './pages/index.css';
-import { defaultErrCards }  from './scripts/cards.js';
 import { createNewCard, deleteCard, clickLikeCard, createCardObject } from './components/card.js';
 import { openPopup, closePopUp, closePopUpEsc, handleOverlay } from './components/modal.js';
-import { enableValidation, validationConfig } from './components/validation.js';
+import { enableValidation, clearValidation, validationConfig, disableButton } from './components/validation.js';
 import { getUserInfo, getCards, patchEditedProfile, patchProfileAvatar, postNewCard, apiConfig, sendLikeCard } from './components/api.js';
 import { renderLoadingBtnText } from  './components/utilities.js';
 
@@ -118,6 +117,8 @@ const renderGetCards = (userInfo, apiConfig) => {
 //Хардкод под модальные окна
 
 function openNewCardPopUp (evt) {
+  clearValidation(newCardForm, validationConfig);
+  disableButton(newCardForm, validationConfig)
   //console.log('Открываю попап для добавления карточки.');
   openPopup(newCardPopUp);
 }
@@ -141,8 +142,9 @@ function addNewCard (evt, userInfo) {
       clearValidation(newCardForm, validationConfig); //Очищаем ошибки
     }).then(() => {
       closePopUp(newCardPopUp);
-      renderLoadingBtnText(false, newCardBtn, 'Создание...');
     })
+    .finally(() => {
+      renderLoadingBtnText(false, newCardBtn, 'Создание...');})
     .catch((err) => {
       console.log('При отправке карточки произошла ошибка. \nОшибка: ', err);
     })
@@ -150,13 +152,15 @@ function addNewCard (evt, userInfo) {
 
 function openEditAvatarPopup (evt) {
   clearValidation(editAvatarForm, validationConfig);
-  //console.log('Открываю попап для редактирования профиля.');
+  disableButton(editAvatarForm, validationConfig)
+  //console.log('Открываю попап для редактирования автара.');
   newAvatar.value = originalAvatarOfProfile.style['background-image'].slice(4, -1).replace(/"/g, "");
   openPopup(editAvatarPopup);
 }
 
 function openEditPopUp (evt) {
   clearValidation(profileEditForm, validationConfig);
+  disableButton(profileEditForm, validationConfig)
   //console.log('Открываю попап для редактирования профиля.');
   nameOfProfile.value = originalNameOfProfile.textContent;
   descriptionOfProfile.value = originalDescriptionOfProfile.textContent;
@@ -187,10 +191,10 @@ const editProfile = (evt) => {
     originalDescriptionOfProfile.textContent = descriptionOfProfile.value;}
   )
   .then(
-    () => renderLoadingBtnText(false, profileBtn, 'Сохранение...')
-  ).then(
     closePopUp(profileEditPopUp)
   )
+  .finally(
+    () => renderLoadingBtnText(false, profileBtn, 'Сохранение...'))
   .catch((err) => {
     console.log('При изменении профиля произошла ошибка. \nОшибка: ', err);
   })
@@ -204,27 +208,14 @@ const editAvatar = (evt) => {
 
   patchProfileAvatar(newAvatarURL, apiConfig).then(() => {
     originalAvatarOfProfile.style = `background-image: url(${newAvatarURL});`;
-  }).then(() =>   {closePopUp(editAvatarPopup); 
-    renderLoadingBtnText(false, avatarBtn, 'Сохранение...')}) 
+  }).then(() =>   {closePopUp(editAvatarPopup);})
+    .finally(
+      () => renderLoadingBtnText(false, avatarBtn, 'Сохранение...')) 
     .catch((err) => {
       console.log('При изменении аватара произошла ошибка. \nОшибка: ', err);
     }) 
 }
 
-//ФУНКЦИИ ВАЛИДАЦИИ
-
-function  clearValidation (form, validationConfig) {
-  //console.log('Запускаю очистку валидации для поля profileEditForm')
-  const formInputs = form.querySelectorAll(validationConfig.inputSelector); // В каждом элементе 2 инпута!!! 
-  formInputs.forEach((formInput) => {
-    const formError = form.querySelector(`.${formInput.id}-error`);
-    formInput.classList.remove(validationConfig.inputErrorClass);
-    //console.log('Убрал класс popup__input_type_error');
-    formError.classList.remove(validationConfig.errorClass);
-    formError.textContent = '';
-    //console.log('Должно пропасть сообщение об ошибке');
-    });
-}
 
 enableValidation(validationConfig) 
 
